@@ -17,7 +17,7 @@ const productSchema = new Schema({
           required: true,
           validate: {
             validator: function (value) {
-              return !isNaN(value) && this.isFinite(value);
+              return !isNaN(value) && isFinite(value);
             },
             message: 'Invalid number or decimal format for price field',
           },
@@ -66,6 +66,6 @@ const productSchema = new Schema({
         },
 }, {timestamps:true});
 
-const Products = model('User', productSchema);
+const Products = model('Product', productSchema);
 
 export default Products;

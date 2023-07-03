@@ -1,5 +1,5 @@
 import express from 'express';
-import {products} from '../controllers/productsController.js';
+import {products,getProducts,getProduct,updateProduct,removeProduct} from '../controllers/productsController.js';
 import AWS from 'aws-sdk';
 const router = express.Router();
 
@@ -10,5 +10,9 @@ AWS.config.update({
 })
 
 router.post('/products', products);
+router.get('/products', getProducts);
+router.get('/products/:productId', getProduct);
+router.put('/products/:productId', updateProduct);
+router.delete('/products/:productId', removeProduct);
 
 export default router;
