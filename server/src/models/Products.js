@@ -3,20 +3,67 @@ import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
 const productSchema = new Schema({
-    { 
-        title: {string, mandatory, unique},
-        description: {string, mandatory},
-        price: {number, mandatory, valid number/decimal},
-        currencyId: {string, mandatory, INR},
-        currencyFormat: {string, mandatory, Rupee symbol},
-        isFreeShipping: {boolean, default: false},
-        productImage: {string, mandatory},  // s3 link
-        style: {string},
-        availableSizes: {array of string, at least one size, enum["S", "XS","M","X", "L","XXL", "XL"]},
-        installments: {number},
-        deletedAt: {Date, when the document is deleted}, 
-        isDeleted: {boolean, default: false},
-      }
+        title: {
+          type:String,
+          required:true,
+          unique:true
+        },
+        description: {
+          type:String,
+          required:true,
+        },
+        price: {
+          type: Number,
+          required: true,
+          validate: {
+            validator: function (value) {
+              return !isNaN(value) && this.isFinite(value);
+            },
+            message: 'Invalid number or decimal format for price field',
+          },
+        },
+        currencyId: {
+          type: String,
+          required: true,
+          enum: ['INR'],
+        },
+        currencyFormat: {
+          type: String,
+          required: true,
+          enum: ['₹'],
+        },
+        isFreeShipping: {
+          type:Boolean, 
+          default: false
+        },
+        productImage: {
+          type:String,
+          required:true,
+        },  
+        style: {
+          type:String
+        },
+        availableSizes: {
+          type:[String],
+          required:true,
+          validate:{
+            validator: function(value){
+              return value.length > 0
+            },
+            message: "At least one size must be specified"
+          },
+          enum:["S", "XS","M","X", "L","XXL", "XL"]
+        },
+        installments: {
+          type:Number
+        },
+        deletedAt: {
+          type:Date
+        }, 
+        isDeleted: {
+          type:Boolean, 
+          default: false
+        },
 }, {timestamps:true});
 
 const Products = model('User', productSchema);

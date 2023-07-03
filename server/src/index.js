@@ -5,8 +5,6 @@ import multer from 'multer';
 import usersRoute from './routes/usersRoute.js';
 import productsRoute from './routes/productsRoutes.js';
 
-
-
 dotenv.config();
 
 const app = express();

@@ -1,5 +1,5 @@
 import express from 'express';
-import {} from '../controllers/productsController.js';
+import {products} from '../controllers/productsController.js';
 import AWS from 'aws-sdk';
 const router = express.Router();
 
@@ -9,5 +9,6 @@ AWS.config.update({
     region: "ap-south-1"
 })
 
+router.post('/products', products);
 
 export default router;

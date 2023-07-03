@@ -11,20 +11,34 @@ const userSchema = new Schema({
         type:String,
         required:true
     },
-    email: { 
-        type:String,
-        required:true, 
-        unique:true
-    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+          validator: (value) => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(value);
+          },
+          message: 'Invalid email format'
+        }
+      },
     profileImage: {
         type:String,
         required:true
     },
     phone: {
-        type:String,
-        required:true, 
-        unique:true 
-    }, 
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+          validator: (value) => {
+            const mobileRegex = /^[6-9]\d{9}$/;
+            return mobileRegex.test(value);
+          },
+          message: 'Invalid Indian mobile number format'
+        }
+      },
     password: {
         type:String,
         required:true, 
