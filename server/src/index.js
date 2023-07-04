@@ -11,6 +11,8 @@ dotenv.config();
 
 const app = express();
 
+app.use(express.json());
+
 app.use(multer().any());
 
 mongoose.connect(process.env.MONGODB_URL, {
@@ -22,7 +24,7 @@ app.use('/', productsRoute);
 app.use('/', cartsRoute);
 app.use('/', ordersRoute);
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT || 4000, () => {
     console.log(`server runing on port : ${process.env.PORT}`)
 });
 
