@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 import usersRoute from './routes/usersRoute.js';
 import productsRoute from './routes/productsRoutes.js';
+import cartsRoute from './routes/cartsRouter.js';
+import ordersRoute from './routes/ordersRoutes.js';
 
 dotenv.config();
 
@@ -17,7 +19,8 @@ mongoose.connect(process.env.MONGODB_URL, {
 
 app.use('/', usersRoute);
 app.use('/', productsRoute);
-
+app.use('/', cartsRoute);
+app.use('/', ordersRoute);
 
 app.listen(process.env.PORT, () => {
     console.log(`server runing on port : ${process.env.PORT}`)
