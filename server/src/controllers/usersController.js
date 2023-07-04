@@ -1,12 +1,14 @@
 import Users from '../models/Users.js';
 import {uploadFile} from '../aws/aws.js';
+import {isValid,validString,validateEmail,isValidReqBody,isValidPassword,isValidPhoneNumber} from '../utils/utils.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 
 export const register = async (req,res) => {
  try {
-    const {fname,lname,email,phone,password,address,billing} = req.body;
+    const {fname,lname,email,phone,password,address} = req.body;
+    const {shipping,billing} = address;
     const files = req.files;
     if(files && files.length>0){
         let uploadedFileURL= await uploadFile( files[0] )
@@ -15,10 +17,43 @@ export const register = async (req,res) => {
     else{
         res.status(400).send({ msg: "No file found" })
     }
+    if(address === null){
+      
+        return  res.status(400).send({status : false, msg : "address required" })
+       }
+    if(billing === null){
+  
+        return  res.status(400).send({status : false, msg : "billing required" })
+       }
+      if(!shipping.street){
+        return  res.status(400).send({status : false, msg : "street required" })
+      }
+      if(!shipping.city){
+        return  res.status(400).send({status : false, msg : "city required" })
+      }
+      if(!shipping.pincode){
+        return  res.status(400).send({status : false, msg : "pincode required" })
+      }
+
+      if(!billing.street){
+        return  res.status(400).send({status : false, msg : "street required" })
+      }
+      if(!billing.city){
+        return  res.status(400).send({status : false, msg : "city required" })
+      }
+      if(!billing.pincode){
+        return  res.status(400).send({status : false, msg : "pincode required" })
+     }
+    //validations
+if(!isValidReqBody(req.body)) return res.status(404).json({status:false,message:"enter data empty field"})   
+if(!validString(fname && lname)) return res.status(404).json({status:false,message:"enter correct name format"}) 
+if(!validateEmail(email)) return res.status(404).json({status:false,message:"enter correct email format"}) 
+if(!isValidPassword(password)) return res.status(404).json({status:false,message:"enter correct password format"}) 
+if(!isValidPhoneNumber(phone)) return res.status(404).json({status:false,message:"enter correct phone format"})
  const hashPass = await bcrypt.hash(password,10);
  const data = {...req.body,password:hashPass};
  const response = await Users.create(data);
- res.status(201).json({status:true,data:response});
+ res.status(201).json({status:true,message:"success",data:response});
  } catch (error) {
     res.status(500).json({status:false,message:error.message})
  }
@@ -47,7 +82,7 @@ export const users = async (req,res) => {
     const userId = req.params.userId;
     const user = await Users.findById(userId);
     if(!user) return res.status(404).json({status:false,message:"no user found"});
-    res.status(200).json({status:true,data:user})
+    res.status(200).json({status:true,message:"success",data:user})
     } catch (error) {
     res.status(500).json({status:false,message:error.message})    
     }
@@ -69,7 +104,7 @@ export const updateProfile = async (req,res) => {
         req.body,
         {new:true}
     );
-    res.status(200).json({status:true,data:updation}); 
+    res.status(200).json({status:true,message:"success",data:updation}); 
     } catch (error) {
     res.status(500).json({status:false,message:error.message})      
     }
