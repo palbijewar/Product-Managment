@@ -1,7 +1,7 @@
 import Cart from '../models/Carts.js';
 import User from '../models/Users.js';
 import Product from '../models/Products.js';
-
+import mongoose from 'mongoose';
 
 export const getCart = async (req, res) => {
     try {
@@ -30,15 +30,34 @@ export const getCart = async (req, res) => {
 
 export const cart = async (req, res) => {
     try {
-        const { userId } = req.params
+        const { userId } = req.params;
+        const { productId, cartId, removeProduct } = req.body;
+    
 
-        const {items,totalPrice,totalItems} = req.body
-
-        const { productId, quantity } = items
-
-        const isCart = await Cart.findOne({userId : userId})
-        const isProduct = await Product.findById(productId)
-        const isUser = await User.findById(userId)
+        if (!mongoose.isValidObjectId(userId)) {
+            return res.status(400).json({ status: false, message: "Invalid user ID" });
+          }
+      
+          if (!mongoose.isValidObjectId(productId)) {
+            return res.status(400).json({ status: false, message: "Invalid product ID" });
+          }
+      
+          if (!mongoose.isValidObjectId(cartId)) {
+            return res.status(400).json({ status: false, message: "Invalid cart ID" });
+          }
+      
+          const isUser = await User.findById(userId);
+      
+          if (!isUser) {
+            return res.status(404).json({ status: false, message: "User Not Found!!!" });
+          }
+      
+          const isCart = await Cart.findById(cartId);
+      
+          if (!isCart) {
+            return res.status(404).json({ status: false, message: "Cart Not Found!!!" });
+          }
+      
 
         if (!isUser) return res.status(404).json({status: false, message: "User Not Found!!!"})
 
@@ -92,47 +111,89 @@ export const cart = async (req, res) => {
 
 export const updateCart = async (req, res) => {
     try {
-        const { userId } = req.params
-        const { productId, cartId, removeProduct } = req.body
+        const {
+            userId
+        } = req.params
+        const {
+            productId,
+            cartId,
+            removeProduct
+        } = req.body
+
+        
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                status: false,
+                message: 'Invalid userId',
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                status: false,
+                message: 'Invalid productId',
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(cartId)) {
+            return res.status(400).json({
+                status: false,
+                message: 'Invalid cartId',
+            });
+        }
+
 
         const isUser = await User.findById(userId)
 
-        if(!isUser) return res.status(404).json({status : false, message : "No User Found !!!"})
+        if (!isUser) return res.status(404).json({
+            status: false,
+            message: "No User Found !!!"
+        })
 
         const isCart = await Cart.findById(cartId)
 
-        if(!isCart) return res.status(404).json({status : false, message : "No Cart Found !!!"})
+        if (!isCart) return res.status(404).json({
+            status: false,
+            message: "No Cart Found !!!"
+        })
 
-        const existingItem = isCart.items.find((item)=>item.productId.toString() === productId) 
+
+        const existingItem = isCart.items.find((item) => item.productId.toString() === productId)
 
         if (!existingItem) {
-            return res.status(404).json({ status: false, message: "Product Not Found in Cart!!!" });
+            return res.status(404).json({
+                status: false,
+                message: "Product Not Found in Cart!!!"
+            });
         }
 
-        if(removeProduct){
+        if (removeProduct) {
             isCart.items = isCart.items.filter((item) => item.productId.toString() !== productId);
 
-        }else{
-            if(existingItem.quantity>1){
-                existingItem.quantity -= 1
+        } else {
+
+            if(existingItem.quantity <= 1){
+                isCart.items = isCart.items.filter((item) => item.productId.toString() !== productId)
             }else{
-                res.status(500).json({status : false, message: "Total quantity can't be less than 0"})
+                if (existingItem.quantity > 0) {
+                    existingItem.quantity -= 1
+                    if(isCart.totalPrice > 0){
+                        isCart.totalPrice -= (isCart.totalPrice) / (existingItem.quantity)
+                    }
+                    if(isCart.totalItems  > 0){
+                        isCart.totalItems -= (existingItem.quantity)
+                    }
+                }
             }
-            if((isCart.totalPrice) >= 0){
-                isCart.totalPrice -= (isCart.totalPrice) / (existingItem.quantity)
-            }else{
-                res.status(500).json({status : false, message: "total price can't be less than 0"})
-            }
-            if((isCart.totalItems) >= 0){
-                isCart.totalItems -= (existingItem.quantity)
-            }else{
-                res.status(500).json({status : false, message: "Total Items can't be less than 0"})
-            }
+            
         }
 
-        await isCart.save();
+        await isCart.save()
 
-        return res.status(200).json({ status: true, isCart });
+        return res.status(200).json({
+            status: true,
+            isCart
+        });
 
     } catch (error) {
         res.status(500).json({
@@ -141,6 +202,7 @@ export const updateCart = async (req, res) => {
         })
     }
 }
+
 
 
 export const deleteCart = async (req, res) => {

@@ -1,11 +1,16 @@
 import Orders from '../models/Orders.js';
 import Users from '../models/Users.js';
 import Products from '../models/Products.js';
+import mongoose from 'mongoose';
 
 export const createOrder = async (req,res) =>{
     try {
     const {userId,items,totalPrice,totalItems,totalQuantity,cancellable,status} = req.body;
     const {productId,quantity} = items;
+
+    if(!mongoose.Schema.Types.ObjectId.isValid(userId)) return res.status(404).json({status:false,message:"invalid userId"});
+    if(!mongoose.Schema.Types.ObjectId.isValid(productId)) return res.status(404).json({status:false,message:"invalid productId"});
+
     if(!userId || !items || !totalPrice || !totalItems || !totalQuantity || !productId || !quantity) return res.status(400).json({status:false,message:"please provide the required data"});
     const user = await Users.findById(userId);
     const response = await Orders.create(req.body);
@@ -19,6 +24,10 @@ export const updateOrder = async (req,res) =>{
     try {
     const {orderId,status} = req.body;
     const {userId} = req.params;
+
+    if(!mongoose.Schema.Types.ObjectId.isValid(orderId)) return res.status(404).json({status:false,message:"invalid orderId"});
+    if(!mongoose.Schema.Types.ObjectId.isValid(userId)) return res.status(404).json({status:false,message:"invalid userId"});
+
     const order = await Orders.findOne({_Id:orderId,userId});
     if(!order) return res.status(404).json({status:false,message:"order not found"});
     const user = await Users.findById(userId);
