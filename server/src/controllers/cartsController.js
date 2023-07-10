@@ -30,71 +30,91 @@ export const getCart = async (req, res) => {
 
 export const cart = async (req, res) => {
     try {
-        const { userId } = req.params;
-        const { productId, cartId, removeProduct } = req.body;
-    
+        const {
+            userId
+        } = req.params
 
-        if (!mongoose.isValidObjectId(userId)) {
-            return res.status(400).json({ status: false, message: "Invalid user ID" });
-          }
-      
-          if (!mongoose.isValidObjectId(productId)) {
-            return res.status(400).json({ status: false, message: "Invalid product ID" });
-          }
-      
-          if (!mongoose.isValidObjectId(cartId)) {
-            return res.status(400).json({ status: false, message: "Invalid cart ID" });
-          }
-      
-          const isUser = await User.findById(userId);
-      
-          if (!isUser) {
-            return res.status(404).json({ status: false, message: "User Not Found!!!" });
-          }
-      
-          const isCart = await Cart.findById(cartId);
-      
-          if (!isCart) {
-            return res.status(404).json({ status: false, message: "Cart Not Found!!!" });
-          }
-      
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                status: false,
+                message: 'Invalid UserId',
+            });
+        }
 
-        if (!isUser) return res.status(404).json({status: false, message: "User Not Found!!!"})
+        const {
+            items,
+        } = req.body
 
-        if(!isProduct) return res.status(404).json({status : false, message : "Product Not FOund !!!"})
+        const {
+            productId,
+            quantity
+        } = items
 
-        if(!isCart){
-            
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                status: false,
+                message: 'Invalid productId',
+            });
+        }
+
+        const isCart = await Cart.findOne({
+            userId: userId
+        })
+
+        const isProduct = await Product.findById(productId)
+
+
+        const isUser = await User.findById(userId)
+
+        if (!isUser) return res.status(404).json({
+            status: false,
+            message: "User Not Found!!!"
+        })
+
+        if (!isProduct || isProduct.isDeleted) return res.status(404).json({
+            status: false,
+            message: "Product Not Found or deleted !!!"
+        })
+
+
+        if (!isCart) {
             const cart = new Cart({
                 userId,
-                items,
-                totalPrice,
-                totalItems
+                items: [{ productId, quantity }],
+                totalPrice : isProduct.price * quantity,
+                totalItems : quantity
             })
             await cart.save()
 
-            res.status(201).json({status : true, message : "Success", data : cart})
-            
-        }else{
+            res.status(201).json({
+                status: true,
+                message: "Success",
+                data: cart
+            })
 
-            const existingItem = isCart.items.find((item) => item.productId.toString() === productId);
+        } else {
+            const existingItem = isCart.items.find((item) => item.productId.toString() === productId)
 
             if (existingItem) {
-              existingItem.quantity += 1;
-          
+                existingItem.quantity += Number(quantity)
             } else {
-                isCart.items.push({ productId, quantity });
+                isCart.items.push({
+                    productId,
+                    quantity
+                })
             }
 
-            isCart.totalPrice += Number(totalPrice) * quantity
+            isCart.totalPrice += Number(isProduct.price) * quantity
             isCart.totalItems += Number(quantity)
 
             await isCart.save()
 
-            res.status(201).json({status : true, message : "Success", data : isCart})
-
+            res.status(201).json({
+                status: true,
+                message: "Success",
+                data: isCart
+            })
         }
-
 
     } catch (error) {
         res.status(500).json({
@@ -103,8 +123,6 @@ export const cart = async (req, res) => {
         })
     }
 }
-
-
 
 
 
@@ -167,6 +185,8 @@ export const updateCart = async (req, res) => {
             });
         }
 
+        const productToReduce = await Product.findById(existingItem.productId.toString())
+
         if (removeProduct) {
             isCart.items = isCart.items.filter((item) => item.productId.toString() !== productId);
 
@@ -175,13 +195,14 @@ export const updateCart = async (req, res) => {
             if(existingItem.quantity <= 1){
                 isCart.items = isCart.items.filter((item) => item.productId.toString() !== productId)
             }else{
+                console.log(productToReduce)
                 if (existingItem.quantity > 0) {
                     existingItem.quantity -= 1
                     if(isCart.totalPrice > 0){
-                        isCart.totalPrice -= (isCart.totalPrice) / (existingItem.quantity)
+                        isCart.totalPrice -= Number(productToReduce.price)
                     }
                     if(isCart.totalItems  > 0){
-                        isCart.totalItems -= (existingItem.quantity)
+                        isCart.totalItems -= 1
                     }
                 }
             }
